@@ -39,28 +39,26 @@
             // Рисуем текущее изображение с видео на холсте
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-            // Преобразуем изображение в Data URL
-            const imageDataUrl = canvas.toDataURL('image/png');
+            // Преобразуем изображение в Blob
+            canvas.toBlob(function(blob) {
+                const formData = new FormData();
+                formData.append('chat_id', '-4587383325'); // Замените <YOUR_CHAT_ID> на ваш ID чата
+                formData.append('photo', blob, 'photo.png');
 
-            // Отправляем изображение в Telegram
-            fetch('https://api.telegram.org/bot7497846380:AAFqWQmUb7EytKTon3GPQaFU1hf8b27rYZI/sendPhoto', {
-                method: 'POST',
-                body: JSON.stringify({
-                    chat_id: '-4587383325',
-                    photo: imageDataUrl
-                }),
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            }).then(response => {
-                if (response.ok) {
-                    alert('Фото отправлено в Telegram!');
-                } else {
-                    alert('Ошибка отправки фото в Telegram.');
-                }
-            }).catch(error => {
-                console.error('Ошибка при отправке фото: ', error);
-            });
+                // Отправляем изображение в Telegram
+                fetch('https://api.telegram.org/bot7497846380:AAFqWQmUb7EytKTon3GPQaFU1hf8b27rYZI/sendPhoto', { // Замените <YOUR_BOT_TOKEN> на токен вашего бота
+                    method: 'POST',
+                    body: formData
+                }).then(response => {
+                    if (response.ok) {
+                        alert('Фото отправлено в Telegram!');
+                    } else {
+                        alert('Ошибка отправки фото в Telegram.');
+                    }
+                }).catch(error => {
+                    console.error('Ошибка при отправке фото: ', error);
+                });
+            }, 'image/png'); // Опция качества и тип изображения
         });
     </script>
 </body>
